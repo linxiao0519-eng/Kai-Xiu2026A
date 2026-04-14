@@ -1,0 +1,1 @@
+<a href=/today>今日日期</a><hr>

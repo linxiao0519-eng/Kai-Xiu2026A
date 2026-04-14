@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>網頁計算機</title>
+</head>
+<body>
+    <h1>簡易網頁計算機</h1>
+
+    <form action="/math" method="POST">
+        <input type="number" name="x" placeholder="請輸入數字 X" required>
+        
+        <select name="opt">
+            <option value="+">+</option>
+            <option value="-">-</option>
+            <option value="*">*</option>
+            <option value="/">/</option>
+        </select>
+
+        <input type="number" name="y" placeholder="請輸入數字 Y" required>
+        
+        <button type="submit">開始計算</button>
+    </form>
+
+    <hr>
+
+    {% if result_text %}
+        <h3>【計算結果】：{{ result_text }}</h3>
+    {% endif %}
+
+    <br>
+    <a href="/">回首頁</a>
+</body>
+</html>
