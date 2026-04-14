@@ -1,5 +1,24 @@
+import os
+import json
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# 判斷是在 Vercel 還是本地
+if os.path.exists('serviceAccountKey.json'):
+    # 本地環境：讀取檔案
+    cred = credentials.Certificate('serviceAccountKey.json')
+else:
+    # 雲端環境：從環境變數讀取 JSON 字串
+    firebase_config = os.getenv('FIREBASE_CONFIG')
+    cred_dict = json.loads(firebase_config)
+    cred = credentials.Certificate(cred_dict)
+
+firebase_admin.initialize_app(cred)
+
 from flask import Flask, render_template, request
 from datetime import datetime
+import firebase_admin
+import random
 app = Flask(__name__)
 
 @app.route("/")
@@ -11,7 +30,61 @@ def index():
     link += "<a href=/welcome?u=陳楷修&dep=靜宜資管>welcome</a><hr>"
     link += "<a href=/account>POST傳值</a><hr>"
     link += "<a href=/math>計算機</a><hr>"
+    link += "<a href=/cup>擲茭</a><hr>"
+    link += "<a href=/read4>查詢</a><hr>"
+    link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
     return link
+
+@app.route("/read")
+def read():
+    Temp = ""
+    db = firestore.client()
+
+    collection_ref = db.collection("靜宜資管2026a")
+    #docs = collection_ref.where(filter=FieldFilter("mail","==", "tcyang@pu.edu.tw")).get()
+    docs = collection_ref.order_by("lab", direction=firestore.Query.DESCENDING).limit(4).get()
+    for doc in docs:
+        Temp += str(doc.to_dict()) + "<br>"
+    return Temp
+
+
+@app.route("/read4", methods=["GET", "POST"])
+def read4():
+    if request.method == "POST":
+        keyword = request.form.get("keyword")
+        db = firestore.client()
+        collection_ref = db.collection("靜宜資管2026a")
+        docs = collection_ref.get()
+        
+        result = f"<h1>查詢結果</h1>"
+        result += f"<p>您查詢的關鍵字是：{keyword}</p><hr>"
+        
+        found = False
+        for doc in docs:
+            user = doc.to_dict()
+            # 實作圖片中的邏輯：判斷關鍵字是否在老師姓名中
+            if keyword in user.get("name", ""):
+                found = True
+                result += f"● {user['name']} 老師的研究室在 {user.get('lab', '未知')}<br>"
+        
+        if not found:
+            result += "抱歉，找不到符合條件的老師。"
+            
+        result += "<br><br><a href='/read4'>重新查詢</a> | <a href='/'>回首頁</a>"
+        return result
+    else:
+        # 顯示查詢介面
+        html = """
+        <h1>查詢老師研究室</h1>
+        <form method="POST">
+            <label>請輸入老師姓名關鍵字：</label>
+            <input type="text" name="keyword">
+            <button type="submit">查詢</button>
+        </form>
+        <br><a href="/">回首頁</a>
+        """
+        return html
+
 
 @app.route("/mis")
 def course():
@@ -70,6 +143,35 @@ def math_action():
 
     # 最後把結果傳回同一個網頁顯示
     return render_template("math.html", result_text=result_text)
+
+@app.route('/cup', methods=["GET"])
+def cup():
+    # 檢查網址是否有 ?action=toss
+    #action = request.args.get('action')
+    action = request.values.get("action")
+    result = None
+    
+    if action == 'toss':
+        # 0 代表陽面，1 代表陰面
+        x1 = random.randint(0, 1)
+        x2 = random.randint(0, 1)
+        
+        # 判斷結果文字
+        if x1 != x2:
+            msg = "聖筊：表示神明允許、同意，或行事會順利。"
+        elif x1 == 0:
+            msg = "笑筊：表示神明一笑、不解，或者考慮中，行事狀況不明。"
+        else:
+            msg = "陰筊：表示神明否定、憤怒，或者不宜行事。"
+            
+        result = {
+            "cup1": "/static/" + str(x1) + ".jpg",
+            "cup2": "/static/" + str(x2) + ".jpg",
+            "message": msg
+        }
+        
+    return render_template('cup.html', result=result)
+
 
 
 if __name__ == "__main__":
