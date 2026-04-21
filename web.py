@@ -1,6 +1,8 @@
 import os
 import json
 import firebase_admin
+import requests
+from bs4 import BeautifulSoup
 from firebase_admin import credentials, firestore
 
 # 判斷是在 Vercel 還是本地
@@ -32,8 +34,51 @@ def index():
     link += "<a href=/math>計算機</a><hr>"
     link += "<a href=/cup>擲茭</a><hr>"
     link += "<a href=/read4>查詢</a><hr>"
+    link += "<a href=/sp1>爬蟲</a><hr>"
+    link += "<a href=/movie>電影查詢</a><hr>"
     link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
     return link
+
+@app.route("/sp1")
+def sp1():
+    R = "<h1>爬蟲結果</h1>"
+    url = "https://kai-xiu2026-a.vercel.app/about"
+    Data = requests.get(url)
+    Data.encoding = "utf-8"
+    #print(Data.text)
+    sp = BeautifulSoup(Data.text, "html.parser")
+    result=sp.select("td a")
+
+
+    for item in result:
+        R += item.text + "<br>" + item.get("href")+"<br><br>"
+    return R
+
+@app.route("/movie")
+def movie():
+    url = "http://www.atmovies.com.tw/movie/next/"
+    Data = requests.get(url)
+    Data.encoding = "utf-8"
+    sp = BeautifulSoup(Data.text, "html.parser")
+    result = sp.select(".filmListAllX li")
+    
+    # 建立一個變數來儲存 HTML 結果
+    R = "<h1>近期上映電影</h1>"
+    
+    for item in result:
+        # 取得電影名稱
+        img_tag = item.find("img")
+        title = img_tag.get("alt") if img_tag else "無標題"
+        
+        # 取得連結
+        a_tag = item.find("a")
+        link = "http://www.atmovies.com.tw" + a_tag.get("href") if a_tag else "#"
+        
+        # 組裝成超連結顯示
+        R += f"<a href='{link}' target='_blank'>{title}</a><br>"
+    
+    R += "<hr><a href='/'>回首頁</a>"
+    return R
 
 @app.route("/read")
 def read():
