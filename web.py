@@ -36,7 +36,9 @@ def index():
     link += "<a href=/read4>查詢</a><hr>"
     link += "<a href=/sp1>爬蟲</a><hr>"
     link += "<a href=/movie>電影查詢</a><hr>"
+    link += "<a href=/movie3>查詢關鍵字</a><hr>"
     link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
+    link += "<br><a href=/movie2>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
     return link
 
 @app.route("/sp1")
@@ -79,6 +81,84 @@ def movie():
     
     R += "<hr><a href='/'>回首頁</a>"
     return R
+@app.route("/movie2")
+def movie2():
+  url = "http://www.atmovies.com.tw/movie/next/"
+  Data = requests.get(url)
+  Data.encoding = "utf-8"
+  sp = BeautifulSoup(Data.text, "html.parser")
+  result=sp.select(".filmListAllX li")
+  lastUpdate = sp.find("div", class_="smaller09").text[5:]
+
+  for item in result:
+    picture = item.find("img").get("src").replace(" ", "")
+    title = item.find("div", class_="filmtitle").text
+    movie_id = item.find("div", class_="filmtitle").find("a").get("href").replace("/", "").replace("movie", "")
+    hyperlink = "http://www.atmovies.com.tw" + item.find("div", class_="filmtitle").find("a").get("href")
+    show = item.find("div", class_="runtime").text.replace("上映日期：", "")
+    show = show.replace("片長：", "")
+    show = show.replace("分", "")
+    showDate = show[0:10]
+    showLength = show[13:]
+
+    doc = {
+        "title": title,
+        "picture": picture,
+        "hyperlink": hyperlink,
+        "showDate": showDate,
+        "showLength": showLength,
+        "lastUpdate": lastUpdate
+      }
+
+    db = firestore.client()
+    doc_ref = db.collection("電影").document(movie_id)
+    doc_ref.set(doc)    
+    return "近期上映電影已爬蟲及存檔完畢，網站最近更新日期為：" + lastUpdate 
+
+
+@app.route("/movie3", methods=["GET", "POST"])
+def movie3():
+    if request.method == "POST":
+        keyword = request.form.get("keyword")
+        url = "http://www.atmovies.com.tw/movie/next/"
+        Data = requests.get(url)
+        Data.encoding = "utf-8"
+        sp = BeautifulSoup(Data.text, "html.parser")
+        result_items = sp.select(".filmListAllX li")
+        
+        R = f"<h1>電影搜尋結果：{keyword}</h1>"
+        found = False
+        
+        for item in result_items:
+            # 取得電影名稱
+            img_tag = item.find("img")
+            title = img_tag.get("alt") if img_tag else "無標題"
+            
+            # 只有當關鍵字在標題中時，才顯示
+            if keyword in title:
+                found = True
+                # 取得連結
+                a_tag = item.find("a")
+                link = "http://www.atmovies.com.tw" + a_tag.get("href") if a_tag else "#"
+                
+                R += f"<h3><a href='{link}' target='_blank'>{title}</a></h3>"
+        
+        if not found:
+            R += "<p>抱歉，找不到相關電影。</p>"
+            
+        R += "<hr><a href='/movie3'>重新查詢</a> | <a href='/'>回首頁</a>"
+        return R
+    
+    else:
+        # 顯示搜尋表單
+        return """
+        <h1>電影名稱即時查詢</h1>
+        <form method="POST">
+            <input type="text" name="keyword" placeholder="請輸入電影名稱關鍵字...">
+            <button type="submit">開始爬取與搜尋</button>
+        </form>
+        <br><a href="/">回首頁</a>
+        """
 
 @app.route("/read")
 def read():
