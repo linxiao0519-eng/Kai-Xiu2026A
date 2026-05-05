@@ -37,9 +37,75 @@ def index():
     link += "<a href=/sp1>爬蟲</a><hr>"
     link += "<a href=/movie>電影查詢</a><hr>"
     link += "<a href=/movie3>查詢關鍵字</a><hr>"
+    link += "<a href=/opendata>臺中市十大肇事路口 </a><hr>"
+    link += "<a href=/weather>天氣查詢 </a><hr>"
     link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
     link += "<br><a href=/movie2>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
     return link
+
+@app.route("/weather", methods=["GET", "POST"])
+def weather():
+    if request.method == "POST":
+        # 從表單獲取使用者輸入的城市
+        city = request.form.get("city", "臺中市")
+        city = city.replace("台", "臺")
+        
+        # 氣象局 API 設定
+        token = "rdec-key-123-45678-011121314"
+        url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization={token}&format=JSON&locationName={city}"
+        
+        try:
+            Data = requests.get(url)
+            raw_json = json.loads(Data.text)
+            
+            # 取得氣象資料
+            records = raw_json["records"]
+            if not records["location"]:
+                return f"<h3>找不到「{city}」的資料，請確保輸入正確的縣市名稱（如：臺北市、彰化縣）。</h3><br><a href='/weather'>重新查詢</a>"
+            
+            WeatherTitle = records["datasetDescription"]
+            location_data = records["location"][0]
+            
+            # 抓取天氣現象 (Wx) 與 降雨機率 (PoP)
+            Weather = location_data["weatherElement"][0]["time"][0]["parameter"]["parameterName"]
+            Rain = location_data["weatherElement"][1]["time"][0]["parameter"]["parameterName"]
+            
+            R = f"<h1>{WeatherTitle}</h1>"
+            R += f"<h3>查詢城市：{city}</h3>"
+            R += f"<p>目前預報：{Weather}</p>"
+            R += f"<p>降雨機率：{Rain}%</p>"
+            R += "<hr><a href='/weather'>再次查詢</a> | <a href='/'>回首頁</a>"
+            return R
+            
+        except Exception as e:
+            return f"查詢出錯：{str(e)} <br><a href='/weather'>返回重試</a>"
+            
+    else:
+        # GET 模式：顯示輸入表單
+        html = """
+        <h1>氣象即時查詢</h1>
+        <form method="POST">
+            <label>請輸入縣市名稱（如：臺中市、高雄市）：</label><br>
+            <input type="text" name="city" placeholder="例如：臺中市" required>
+            <button type="submit">查詢天氣</button>
+        </form>
+        <br><a href="/">回首頁</a>
+        """
+        return html
+    
+
+@app.route("/opendata")
+def opendata():
+    R = ""
+    url = "https://newdatacenter.taichung.gov.tw/api/v1/no-auth/resource.download?rid=a1b899c0-511f-4e3d-b22b-814982a97e41"
+    Data = requests.get(url)
+    #print(Data.text)
+
+    JsonData = json.loads(Data.text)
+    for item in JsonData:
+        R += item["路口名稱"] + ",總共發生" + item["總件數"] + "件事故<br>"
+    
+    return R + "<hr><a href='/'>回首頁</a>"
 
 @app.route("/sp1")
 def sp1():
