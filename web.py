@@ -17,7 +17,7 @@ else:
 
 firebase_admin.initialize_app(cred)
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response, jsonify
 from datetime import datetime
 import firebase_admin
 import random
@@ -44,6 +44,17 @@ def index():
     link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
     link += "<br><a href=/movie2>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
     return link
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    # build a request object
+    req = request.get_json(force=True)
+    # fetch queryResult from json
+    action =  req.get("queryResult").get("action")
+    msg =  req.get("queryResult").get("queryText")
+    info = "動作：" + action + "； 查詢內容：" + msg
+    return make_response(jsonify({"fulfillmentText": info}))
+
 
 @app.route("/weather", methods=["GET", "POST"])
 def weather():
