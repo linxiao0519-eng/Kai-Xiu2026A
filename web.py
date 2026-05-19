@@ -41,6 +41,7 @@ def index():
     link += "<a href=/weather>天氣查詢 </a><hr>"
     link += "<a href=/movie3>查詢關鍵字</a><hr>"
     link += "<a href=/rate>本週新片進DB</a><hr>"
+    link += "<a href=/demo>聊天機器人</a><hr>"
     link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
     link += "<br><a href=/movie2>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
     return link
@@ -48,7 +49,7 @@ def index():
 @app.route("/demo")
 def demo():
     return render_template("demo.html")
-    
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     # build a request object
