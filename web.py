@@ -45,6 +45,10 @@ def index():
     link += "<br><a href=/movie2>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
     return link
 
+@app.route("/demo")
+def demo():
+    return render_template("demo.html")
+    
 @app.route("/webhook", methods=["POST"])
 def webhook():
     # build a request object
