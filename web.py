@@ -21,7 +21,10 @@ from flask import Flask, render_template, request, make_response, jsonify
 from datetime import datetime
 import firebase_admin
 import random
+from google import genai
+
 app = Flask(__name__)
+client = genai.Client()
 
 @app.route("/")
 def index():
@@ -45,6 +48,19 @@ def index():
     link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
     link += "<br><a href=/movie2>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
     return link
+
+
+@app.route("/AI")
+def AI():
+    # 每次使用者拜訪該路徑時，直接使用全域的 client 呼叫模型
+    response = client.models.generate_content(
+        model='gemini-3.5-flash',
+        contents='我想查詢靜宜大學資管系的評價？',
+    )
+    
+    # 回傳生成的文字
+    return response.text
+
 
 @app.route("/demo")
 def demo():
