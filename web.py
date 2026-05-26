@@ -113,8 +113,8 @@ def webhook():
         info += result
     elif (action == "input.unknown"):
             ai_config = types.GenerateContentConfig(
-        max_output_tokens = 3000
-    
+        max_output_tokens = 2000
+
     )
     response = client.models.generate_content(
         model='gemini-3.5-flash', 
