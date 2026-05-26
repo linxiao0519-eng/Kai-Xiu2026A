@@ -48,9 +48,14 @@ def index():
     link += "<a href=/demo>聊天機器人</a><hr>"
     link += "<a href=/AI>Gemini</a><hr>"
     link += "<a href=/ask>提問</a><hr>"
+    link += "<a href=/mes>提問機器人</a><hr>"
     link += "<br><a href=/read>讀取Firestore資料(根據lab遞減排序，取前4)</a><br>"
     link += "<br><a href=/movie2>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
     return link
+
+@app.route("/mes")
+def mes():
+    return render_template("messenger.html")
 
 @app.route('/ask', methods=['GET', 'POST']) 
 def ask():
