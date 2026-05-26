@@ -94,16 +94,15 @@ def AI():
 def demo():
     return render_template("demo.html")
 
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    # build a request object
     req = request.get_json(force=True)
-    # fetch queryResult from json
-    action =  req["queryResult"]["action"]
-    #msg =  req["queryResult"]["queryText"]
-    #info = "我是陳楷修設計的電影聊天機器人，動作：" + action + "； 查詢內容：" + msg
-    if (action == "rateChoice"):
-        rate =  req["queryResult"]["parameters"]["rate"]
+    action = req["queryResult"]["action"]
+    info = ""
+
+    if action == "rateChoice":
+        rate = req["queryResult"]["parameters"]["rate"]
         info = "我是陳楷修開發的電影聊天機器人,您選擇的電影分級是：" + rate + "，相關電影：\n"
 
         db = firestore.client()
@@ -111,23 +110,25 @@ def webhook():
         docs = collection_ref.get()
         result = ""
         for doc in docs:
-            dict = doc.to_dict()
-            if rate in dict["rate"]:
-                result += "片名：" + dict["title"] + "\n"
-                result += "介紹：" + dict["hyperlink"] + "\n\n"
+            dict_data = doc.to_dict()
+            if rate in dict_data.get("rate", ""):
+                result += "片名：" + dict_data.get("title", "無題") + "\n"
+                result += "介紹：" + dict_data.get("hyperlink", "") + "\n\n"
         info += result
-    elif (action == "input.unknown"):
-            ai_config = types.GenerateContentConfig(
-        max_output_tokens = 500
 
-    )
-    response = client.models.generate_content(
-        model='gemini-3.5-flash', 
-        contents=req["queryResult"]["queryText"],
-        config=ai_config,        # 👈 帶入設定
-    )
+    elif action == "input.unknown":
+        # 修正縮排與結構
+        ai_config = types.GenerateContentConfig(
+            max_output_tokens=500
+        )
+        # 修正模型名稱為 gemini-2.5-flash
+        response = client.models.generate_content(
+            model='gemini-2.5-flash', 
+            contents=req["queryResult"]["queryText"],
+            config=ai_config,
+        )
+        info = response.text
 
-        info =  response.text
     return make_response(jsonify({"fulfillmentText": info}))
 
 
