@@ -58,12 +58,14 @@ def ask():
         if not user_prompt:
             return "請輸入內容", 400
         try:
+            # 修正：將模型名稱改為正確的 'gemini-2.5-flash'
             response = client.models.generate_content(
-                model='gemini-3.5-flash',
+                model='gemini-2.5-flash',
                 contents=user_prompt,
             )
             return response.text
         except Exception as e:
+            # 如果還是報錯，這樣可以印出精確的錯誤訊息，方便你除錯
             return f"發生錯誤: {str(e)}", 500
 
     else:    
