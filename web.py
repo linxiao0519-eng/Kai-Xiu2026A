@@ -22,6 +22,7 @@ from datetime import datetime
 import firebase_admin
 import random
 from google import genai
+from google.genai import types
 
 app = Flask(__name__)
 client = genai.Client()
@@ -111,7 +112,16 @@ def webhook():
                 result += "介紹：" + dict["hyperlink"] + "\n\n"
         info += result
     elif (action == "input.unknown"):
-        info =  req["queryResult"]["queryText"]
+            ai_config = types.GenerateContentConfig(
+        max_output_tokens = 5000
+    )
+    response = client.models.generate_content(
+        model='gemini-3.5-flash', 
+        contents=req["queryResult"]["queryText"],
+        config=ai_config,        # 👈 帶入設定
+    )
+
+        info =  response.text
     return make_response(jsonify({"fulfillmentText": info}))
 
 
