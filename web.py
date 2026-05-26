@@ -116,17 +116,23 @@ def webhook():
                 result += "介紹：" + dict_data.get("hyperlink", "") + "\n\n"
         info += result
 
-    elif action == "input.unknown":
-        # 修正縮排與結構
+     elif (action == "input.unknown"):
+        #info =  req["queryResult"]["queryText"]
+
+        # 2. 建立設定物件，設定你希望限制的最大 Token 數（例如 500）
         ai_config = types.GenerateContentConfig(
-            max_output_tokens=500
+            max_output_tokens = 500
         )
-        # 修正模型名稱為 gemini-2.5-flash
+
+
+            # 每次使用者拜訪該路徑時，直接使用全域的 client 呼叫模型
         response = client.models.generate_content(
-            model='gemini-2.5-flash', 
+            model='gemini-3.5-flash',
             contents=req["queryResult"]["queryText"],
             config=ai_config,
         )
+   
+        # 回傳生成的文字
         info = response.text
 
     return make_response(jsonify({"fulfillmentText": info}))
