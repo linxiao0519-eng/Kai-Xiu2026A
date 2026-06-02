@@ -66,7 +66,7 @@ def ask():
         try:
             # 修正：將模型名稱改為正確的 'gemini-2.5-flash'
             response = client.models.generate_content(
-                model='gemini-3.1-flash',
+                model='gemini-2.5-flash',
                 contents=user_prompt,
             )
             return response.text
@@ -127,7 +127,7 @@ def webhook():
 
             # 每次使用者拜訪該路徑時，直接使用全域的 client 呼叫模型
         response = client.models.generate_content(
-            model='gemini-3.5-flash',
+            model='gemini-3.1-flash-lite',
             contents=req["queryResult"]["queryText"],
             config=ai_config,
         )
