@@ -95,6 +95,9 @@ def demo():
     return render_template("demo.html")
 
 
+
+
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json(force=True)
@@ -116,23 +119,23 @@ def webhook():
                 result += "介紹：" + dict_data.get("hyperlink", "") + "\n\n"
         info += result
 
-     elif (action == "input.unknown"):
-        info =  req["queryResult"]["queryText"]
+    elif action == "input.unknown":
+        # 修正原先這裡多出來的空格縮排錯誤
+        query_text = req["queryResult"]["queryText"]
 
-        # 2. 建立設定物件，設定你希望限制的最大 Token 數（例如 500）
+        # 1. 調整 Token 限制（改為 1000 讓回答能完整說完不被切斷）
         ai_config = types.GenerateContentConfig(
-            max_output_tokens = 500
+            max_output_tokens=1000
         )
 
-
-            # 每次使用者拜訪該路徑時，直接使用全域的 client 呼叫模型
+        # 2. 呼叫 Gemini 模型
         response = client.models.generate_content(
             model='gemini-3.1-flash-lite',
-            contents=req["queryResult"]["queryText"],
+            contents=query_text,
             config=ai_config,
         )
    
-        # 回傳生成的文字
+        # 3. 取得完整生成的文字
         info = response.text
 
     return make_response(jsonify({"fulfillmentText": info}))
